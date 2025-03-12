@@ -1,0 +1,8 @@
+- name: Verificar si Docker está instalado
+  command: docker --version
+  register: docker_installed
+  ignore_errors: true
+
+- name: Establecer variable global docker_installed
+  set_fact:
+    docker_installed: "{{ docker_installed.rc == 0 }}"

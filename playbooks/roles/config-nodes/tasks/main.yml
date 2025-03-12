@@ -1,0 +1,42 @@
+---
+# let root interact with the cluster
+- name: Create root .kube directory
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+    mode: '0755'
+
+- name: Copy config to root home
+  ansible.builtin.copy:
+    src: /tmp/kube-config
+    dest: /root/.kube/config
+    mode: '0644'
+
+- name: Replace localhost with master node IP in kubeconfig for root
+  ansible.builtin.lineinfile:
+    path: /root/.kube/config
+    regexp: '^ *server: https://127.0.0.1:6443'
+    line: '    server: https://172.16.60.22:6443'
+    backrefs: yes
+
+# let user interact with the cluster
+- name: Create user .kube directory
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.kube
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+
+- name: Copy config to user home
+  ansible.builtin.copy:
+    src: /tmp/kube-config
+    dest: /home/{{ ansible_user }}/.kube/config
+    mode: '0644'
+
+- name: Replace localhost with master node IP in kubeconfig for user
+  ansible.builtin.lineinfile:
+    path: /home/{{ ansible_user }}/.kube/config
+    regexp: '^ *server: https://127.0.0.1:6443'
+    line: '    server: https://172.16.60.22:6443'
+    backrefs: yes
+

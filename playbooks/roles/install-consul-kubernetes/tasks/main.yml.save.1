@@ -1,0 +1,116 @@
+# Configurar el repositorio de Helm de HashiCorp
+- name: Añadir repositorio de HashiCorp a Helm
+  kubernetes.core.helm_repository:
+    name: hashicorp
+    repo_url: https://helm.releases.hashicorp.com
+    state: present
+
+# Instalar Consul usando Helm
+- name: Instalar Consul usando Helm
+  kubernetes.core.helm:
+    release_name: consul
+    chart_ref: hashicorp/consul
+    state: present
+    release_namespace: monitoring
+    create_namespace: true
+    values:
+      global:
+        name: consul
+      server:
+        enabled: false
+      client:
+        enabled: true
+      connectInject:
+        enabled: false
+      ui:
+        enabled: false
+      externalServers:
+        enabled: true
+        hosts:
+          - "172.16.60.21" #servidor consul fuera del cluster
+        useSystemRoots: true  # Si hay problemas de certificados, prueba con true
+
+- name: Configurar el cliente Consul en Kubernetes
+  kubernetes.core.k8s:
+    state: present
+    namespace: monitoring
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: consul-client-config
+      data:
+        consul.json: |
+          {
+            "node_name": "pc2"
+            "retry_join": ["172.16.60.21"],
+            "enable_central_service_config": true
+          }
+         prometheus.json: |
+          {
+            "service": {
+              "ID": "prometheus-cluster",
+              "Name": "prometheus",
+              "Address": "{{ ansible_default_ipv4.address }}",
+              "Port": 31000,
+              "Tags": ["federated, prometheus"],
+              "Check": {
+                "HTTP": "http://{{ ansible_default_ipv4.address }}:31000/-/healthy",
+                "Interval": "30s"
+              }
+            }
+          }
+
+#Registrar el prometheus de forma automática
+#- name: Registrar prometheus en consul
+#  kubernetes.core.k8s:
+#    state: present
+#    namespace: monitoring
+#    definition:
+#      apiVersion: v1
+#      kind: ConfigMap
+#      metadata:
+#        name: consul-client-config
+#      data:
+#        prometheus.json: |
+#          {
+#            "service": {
+#              "ID": "prometheus-cluster",
+#              "Name": "prometheus",
+#              "Address": "my-prometheus-server.monitoring.svc.cluster.local",
+#              "Port": 31000,
+#              "Tags": ["federated"],
+#              "Check": {
+#                "HTTP": "http://my-prometheus-server.monitoring.svc.cluster.local:31000/-/healthy",
+#                "Interval": "30s"
+#              }
+#            }
+#          }
+
+#- name: Cargar configuracion del cliente
+#  kubernetes.core.k8s:
+#    state: present
+#    namespace: monitoring
+#    definition:
+#      apiVersion: apps/v1
+#      kind: DaemonSet
+#      metadata:
+#        name: consul-client
+#      spec:
+#        template:
+#          spec:
+#            volumes:
+#              - name: consul-config
+#                configMap:
+#                  name: consul-client-config
+#            containers:
+#              - name: consul
+#                volumeMounts:
+#                  - name: consul-config
+#                    mountPath: "/consul/config"
+#                args:
+#                  - "agent"
+#                  - "-retry-join=172.16.60.21"
+#                  - "-data-dir=/consul/data"
+#                  - "-config-dir=/consul/config"
+

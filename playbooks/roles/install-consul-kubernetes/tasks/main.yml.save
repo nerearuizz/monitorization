@@ -1,0 +1,27 @@
+# Configurar el repositorio de Helm de HashiCorp
+- name: Añadir repositorio de HashiCorp a Helm
+  kubernetes.core.helm_repository:
+    name: hashicorp
+    repo_url: https://helm.releases.hashicorp.com
+    state: present
+
+# Instalar Consul usando Helm
+- name: Instalar Consul usando Helm
+  kubernetes.core.helm:
+    release_name: consul
+    chart_ref: hashicorp/consul
+    state: present
+    release_namespace: monitoring
+    create_namespace: true
+    values:
+      global:
+        name: consul
+      server:
+        enabled: true  # Habilita el servidor
+      client:
+        enabled: true   # Solo instala el agente
+        grpc: true
+      connectInject:
+        enabled: false
+      ui:
+        enabled: true
