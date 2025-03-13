@@ -1,7 +1,0 @@
-global:
-  scrape_interval: {{ prometheus_scrape_interval }}
-  evaluation_interval: {{ prometheus_evaluation_interval }}
-
-scrape_configs:
-{{ prometheus_scrape_configs | to_json | from_json | to_nice_yaml( width=50, explicit_start=False, explicit_end=False) }}
-

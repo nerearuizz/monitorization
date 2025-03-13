@@ -1,8 +1,0 @@
-data_dir = "/opt/consul/data"
-node_name = "{{ inventory_hostname }}"
-server = false
-retry_join = ["172.16.60.21"]
-bind_addr = "{{ ansible_default_ipv4.address }}"
-advertise_addr = "{{ ansible_default_ipv4.address }}"
-client_addr = "0.0.0.0"
-datacenter = "dc1"

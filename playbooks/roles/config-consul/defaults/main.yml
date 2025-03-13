@@ -1,2 +1,0 @@
-consul_role: "agent"  # O "server", esto puede ser sobrescrito en el playbook
-consul_config_file: "{{ 'consul-agent.hcl.j2' if consul_role == 'agent' else 'consul-server.hcl.j2' }}"

@@ -1,9 +1,0 @@
----
-- name: defining the local-path StorageClass
-  # if a certain release is needed change 'master' for 'version':
-  # https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.25/deploy/local-path-storage.yaml
-  shell: "kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/master/deploy/local-path-storage.yaml"
-
-- name: setting up the local-path StorageClass as default
-  shell: 'kubectl patch storageclass local-path -p "{\"metadata\": {\"annotations\":{\"storageclass.kubernetes.io/is-default-class\":\"true\"}}}"'
-
