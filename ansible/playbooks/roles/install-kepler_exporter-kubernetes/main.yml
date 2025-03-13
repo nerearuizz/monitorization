@@ -1,0 +1,36 @@
+- name: Check if Kepler Exporter is installed
+  become: true
+  ansible.builtin.command:
+    cmd: "helm list --namespace monitoring -q"
+  register: helm_list_result
+  failed_when: false
+
+- name: Uninstall Kepler Exporter if it exists
+  become: true
+  ansible.builtin.command:
+    cmd: "helm uninstall kepler-exporter --namespace monitoring"
+  when: "'kepler-exporter' in helm_list_result.stdout"
+
+- name: Check if Kepler Helm repository is already added
+  become: true
+  ansible.builtin.command:
+    cmd: "helm repo list -q"
+  register: helm_repo_list_result
+  failed_when: false
+
+- name: Add Kepler Helm repository if not already present
+  become: true
+  ansible.builtin.command:
+    cmd: "helm repo add kepler https://sustainable-computing-io.github.io/kepler-helm-chart"
+  when: "'kepler' not in helm_repo_list_result.stdout"
+
+- name: Update Helm repositories
+  become: true
+  ansible.builtin.command:
+    cmd: "helm repo update"
+
+- name: Install Kepler Exporter as DaemonSet
+  become: true
+  ansible.builtin.command:
+    cmd: "helm install kepler-exporter kepler/kepler --namespace monitoring --set daemonset.enabled=true"
+
