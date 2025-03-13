@@ -8,7 +8,6 @@
   hosts: master
   vars:
     consul_role: "server"
-    context: "non-kubernetes"
   roles:
     - config-consul
     - install-consul
@@ -19,7 +18,6 @@
   hosts: workers
   vars:
     consul_role: "agent"
-    context: "non-kubernetes"
   roles:
     - config-consul
     - install-consul
@@ -30,6 +28,13 @@
   hosts: cluster-members
   roles:
     - install-helm
+
+- name: Configurar Master
+  hosts: cluster-master
+  become: true
+  roles:
+#    - create-virtual-env
+    - config-master
 
 - name: Configurar Nodos
   hosts: cluster-workers
@@ -42,8 +47,6 @@
 #  vars:
 #    ansible_python_interpreter: /home/ikerlan/ansible-venv/bin/python
   roles:
-#    - create-virtual-env
-    - config-master
     - define-storage-class
 #    - install-consul
     - install-prometheus-kubernetes #con prometheus ya se instala el node exporter

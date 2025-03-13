@@ -21,7 +21,6 @@ prometheus_scrape_configs:
     params:
       'match[]': ['{__name__=~".*"}']  # Esto selecciona todas las métricas que quieres federar, ajusta según lo que necesites
     relabel_configs:
-    relabel_configs:
       - source_labels: [__meta_consul_service]
         target_label: job
       - source_labels: [__meta_consul_tags]
