@@ -1,0 +1,35 @@
+- name: Crear el directorio /etc/consul.d si no existe
+  file:
+    path: /etc/consul.d
+    state: directory
+    mode: '0755'
+  become: true  # Necesario para permisos de escritura en /etc
+
+- name: Crear el directorio /opt/consul/data
+  ansible.builtin.file:
+    path: /opt/consul/data
+    state: directory
+    mode: '0755'  # Configura permisos adecuados
+    owner: ikerlan  # Asegúrate de que el propietario sea el usuario de Consul
+    group: ikerlan # Asegúrate de que el grupo sea el adecuado
+  become: true
+
+- name: copiar archivo de configuracion para AGENTE
+  template:
+      src: templates/consul-agent.hcl.j2
+      dest: /etc/consul.d/consul.hcl #ruta donde se guarda
+      owner: ikerlan
+      group: ikerlan
+      mode: 0744
+  become: true
+  when: consul_role == "agent"
+
+- name: copiar archivo de configuracion para SERVER
+  template:
+      src: templates/consul-server.hcl.j2
+      dest: /etc/consul.d/consul.hcl #ruta donde se guarda
+      owner: ikerlan
+      group: ikerlan
+      mode: 0744
+  become: true
+  when: consul_role == "server"

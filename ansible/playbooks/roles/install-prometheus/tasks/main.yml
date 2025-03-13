@@ -1,0 +1,27 @@
+- name: Create Folder /home/ikerlan/prometheus if not exist
+  file:
+    path: /home/ikerlan/prometheus
+    owner: ikerlan
+    group: ikerlan
+    mode: 0755
+    state: directory
+
+- name: copy prometheus config file
+  template: >
+      src=templates/prometheus.yml.j2
+      dest=/home/ikerlan/prometheus/prometheus.yml
+      owner=ikerlan
+      group=ikerlan
+      mode=0744
+
+- name: Create Prometheus container
+  docker_container:
+    name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - /home/ikerlan/prometheus:/prometheus
+    command: >
+      --config.file=/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+    published_ports: "9090:9090"
+    user: root

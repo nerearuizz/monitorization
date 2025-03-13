@@ -1,0 +1,71 @@
+---
+- name: Instalar Contenedor Consul
+  docker_container:
+    name: consul
+    image: hashicorp/consul:1.20.2 #1.16.0
+    state: started
+    network_mode: host
+    volumes:
+      - /etc/consul.d:/consul/config
+    command: >
+      agent -config-dir=/consul/config
+    restart_policy: always
+    user: root
+  when: docker_installed
+
+- name: Descargar el binario de Consul
+  get_url:
+    url: https://releases.hashicorp.com/consul/1.14.0/consul_1.14.0_linux_amd64.zip
+    dest: /tmp/consul.zip
+    mode: '0644'
+  when: not docker_installed
+
+- name: Instalar dependencias para descomprimir el archivo
+  become: true
+  apt:
+    name:
+      - unzip
+    state: present
+    update_cache: yes
+  when: not docker_installed
+
+- name: Descomprimir Consul
+  become: true
+  unarchive:
+    src: /tmp/consul.zip
+    dest: /usr/local/bin/
+    remote_src: yes
+  when: not docker_installed
+
+- name: Asegurar permisos correctos para el binario de Consul
+  become: true
+  file:
+    path: /usr/local/bin/consul
+    mode: '0755'
+  when: not docker_installed
+
+- name: Crear servicio systemd para Consul
+  become: true
+  copy:
+    content: |
+      [Unit]
+      Description=Consul
+      Documentation=https://www.consul.io/docs
+
+      [Service]
+      ExecStart=/usr/local/bin/consul agent -config-dir=/etc/consul.d
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/consul.service
+    mode: '0644'
+  when: not docker_installed
+
+- name: Habilitar y arrancar el servicio Consul
+  become: true
+  systemd:
+    name: consul
+    state: started
+    enabled: yes
+  when: not docker_installed

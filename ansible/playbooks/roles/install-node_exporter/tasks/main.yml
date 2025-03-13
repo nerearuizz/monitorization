@@ -1,0 +1,45 @@
+---
+- name: Instalar node-exporter en el sistema
+  apt:
+    name: prometheus-node-exporter
+    state: present
+  become: true
+  when: not docker_installed
+
+- name: Crear contenedor de node-exporter
+  docker_container:
+    name: node_exporter
+    restart_policy: always
+    image: prom/node-exporter:latest
+    volumes:
+      - "/:/host:ro,rslave"
+    pid_mode: host
+    network_mode: host
+  when: docker_installed
+
+- name: Registrar servicio node-exporter en Consul
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:8500/v1/agent/service/register"
+    method: PUT
+    body: |
+      {
+        "ID": "node-exporter-{{ inventory_hostname }}",
+        "Name": "node-exporter",
+        "Tags": ["prometheus", "exporter"],
+        "Port": 9100,
+        "Check": {
+          "HTTP": "http://{{ ansible_default_ipv4.address }}:9100/metrics",
+          "Interval": "10s"
+        }
+      }
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+
+#- name: Reiniciar el agente de Consul
+#  systemd:
+#    name: consul
+#    state: restarted
+#  become: true
+#  when: not docker_installed

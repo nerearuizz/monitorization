@@ -1,0 +1,62 @@
+# Configurar el repositorio de Helm de HashiCorp
+- name: Añadir repositorio de HashiCorp a Helm
+  kubernetes.core.helm_repository:
+    name: hashicorp
+    repo_url: https://helm.releases.hashicorp.com
+    state: present
+
+#- name: Copiar el archivo values.yaml al servidor
+#  ansible.builtin.copy:
+#    src: /home/ikerlan/ansible-kubernetes/playbooks/roles/install-consul/files/consul-values.yaml
+#    dest: /tmp/consul-values.yaml
+#    mode: '0644'
+#  become: true
+
+#- name: Crear ConfigMap de Consul con config.json
+#  kubernetes.core.k8s:
+#    state: present
+#    definition:
+#      apiVersion: v1
+#      kind: ConfigMap
+#      metadata:
+#        name: consul-config
+#        namespace: monitoring
+#      data:
+#        config.json: "{{ lookup('file', '/home/ikerlan/ansible-kubernetes/playbooks/roles/install-consul/files/config.json') | to_json }}"
+
+# Instalar Consul usando Helm
+- name: Instalar Consul usando Helm
+  kubernetes.core.helm:
+    release_name: consul
+    chart_ref: hashicorp/consul
+    state: present
+    release_namespace: monitoring
+    create_namespace: true
+    values:
+      global:
+        enabled: false
+      client:
+        enabled: true
+        join:
+          - "172.16.60.21"
+        retry_join:
+          - "172.16.60.21"
+      externalServers:
+        enabled: true
+        httpsPort: 8500
+        hosts:
+          - "172.16.60.21"
+      server:
+        enabled: false
+      connectInject:
+        enabled: false
+      ui:
+        enabled: false
+ #     extraVolumes:
+ #       - name: config-volume
+ #         configMap:
+ #           name: consul-config
+ #     extraVolumeMounts:
+ #       - name: config-volume
+ #         mountPath: /consul/config
+ #         subPath: config.json
